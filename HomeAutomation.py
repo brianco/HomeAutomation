@@ -3,6 +3,7 @@
 
 import datetime, time
 import calendar
+import pytz
 import serial
 
 from astral import Astral
@@ -60,8 +61,8 @@ devices = [{'name': 'House Porch Lights',
 	        'id': [0x1A, 0xEE, 0x97]},
            {'name': 'Shop Bench Lights (Weekend)',
             'period': {'Saturday', 'Sunday'},
-            'ontime': 'sunset',
-            'ontime_offset': -60,
+            'ontime': '09:00',
+            'ontime_offset': 0,
             'offtime': '23:30',
             'offtime_offset': 0,
             'id': [0x1A, 0xEE, 0x97]},
@@ -113,7 +114,7 @@ def getSolarInfo():
 
 def scheduleAutomation():
     sun_events = getSolarInfo()
-    now = datetime.datetime.now()
+    now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
 
     # Delete all the old jobs first
     for i in xrange(len(jobs) - 1, -1 , -1):
@@ -125,7 +126,6 @@ def scheduleAutomation():
     for index, device in enumerate(devices):
         # Check to see if its a non-recurring daily event
         today_name = calendar.day_name[datetime.datetime.now().weekday()]
-        current_time = datetime.datetime.now()
 
         if 'period' in device.keys():
             if today_name not in device['period']:
@@ -156,8 +156,8 @@ def scheduleAutomation():
         print(device['name'] + ' offtime: ' + offtime.strftime('%I:%M%p'))
 
         # Check to see if the script has been run between ontime and off time and turn on the device immediately
-        if ontime < current_time < offtime:
-            sendCommand(device[id], 'On')
+        if ontime < now < offtime:
+            sendCommand(device['id'], 'On')
 
 def main():
     daily_refresh_job = sched.add_job(scheduleAutomation, trigger='cron', hour=0, minute=0 )
