@@ -55,7 +55,7 @@ devices = [{'name': 'House Porch Lights',
             'id': [0x08, 0x2C, 0xD1]},
 	       {'name': 'Shop Bench Lights',
 	        'ontime': 'sunset',
-	        'ontime_offset': -60,
+	        'ontime_offset': -120,
 	        'offtime': '23:30',
             'offtime_offset': 0,
 	        'id': [0x1A, 0xEE, 0x97]},
@@ -129,7 +129,7 @@ def scheduleAutomation():
 
         if 'period' in device.keys():
             if today_name not in device['period']:
-                break
+                continue
 
         # ontime
         if device['ontime'] == 'sunrise':
@@ -141,6 +141,7 @@ def scheduleAutomation():
             ontime = now.replace(hour=HM_ontime.tm_hour, minute=HM_ontime.tm_min)
         ontime = ontime + datetime.timedelta(minutes=int(device['ontime_offset']))
         jobs.append(sched.add_job(sendCommand, trigger='cron', hour=ontime.hour, minute=ontime.minute, second=index*2, args=(device['id'], 'On')))
+        jobs.append(sched.add_job(sendCommand, trigger='cron', hour=ontime.hour, minute=ontime.minute, second=index*2+5, args=(device['id'], 'On')))
         print(device['name'] + ' ontime: ' + ontime.strftime('%I:%M%p'))
 
         # offtime
@@ -153,11 +154,14 @@ def scheduleAutomation():
             offtime = now.replace(hour=HM_offtime.tm_hour, minute=HM_offtime.tm_min)
         offtime = offtime + datetime.timedelta(minutes=int(device['offtime_offset']))
         jobs.append(sched.add_job(sendCommand, trigger='cron', hour=offtime.hour, minute=offtime.minute, second=index*2, args=(device['id'], 'Off')))
+        jobs.append(sched.add_job(sendCommand, trigger='cron', hour=offtime.hour, minute=offtime.minute, second=index*2+5, args=(device['id'], 'Off')))
         print(device['name'] + ' offtime: ' + offtime.strftime('%I:%M%p'))
 
         # Check to see if the script has been run between ontime and off time and turn on the device immediately
         if ontime < now < offtime:
             sendCommand(device['id'], 'On')
+        else:
+            sendCommand(device['id'], 'Off')
 
 def main():
     daily_refresh_job = sched.add_job(scheduleAutomation, trigger='cron', hour=0, minute=0 )
