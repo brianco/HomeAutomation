@@ -1,1 +1,1 @@
-python HomeAutomation.py
+python /home/pi/HomeAutomation/HomeAutomation.py

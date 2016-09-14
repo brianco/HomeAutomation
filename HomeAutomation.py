@@ -35,19 +35,38 @@ ser.flushInput()
 ser.flushOutput()
 
 
-devices = [{'name': 'House Porch Lights',
+devices = [
+           {'name': 'House Porch Lights - Dawn',
+            'ontime': '06:30',
+            'ontime_offset': 0,
+            'offtime': 'sunrise',
+            'offtime_offset': 30,
+            'id': [0x08, 0x2F, 0x5C]},
+           {'name': 'House Porch Lights - Dusk',
             'ontime': 'sunset',
             'ontime_offset': -30,
             'offtime': '23:30',
             'offtime_offset': 0,
             'id': [0x08, 0x2F, 0x5C]},
-           {'name': 'Shop Outside Lights',
+           {'name': 'Shop Outside Lights - Dawn',
+            'ontime': '06:30',
+            'ontime_offset': 0,
+            'offtime': 'sunrise',
+            'offtime_offset': 30,
+            'id': [0x38, 0x63, 0xD7]},
+           {'name': 'Shop Outside Lights - Dusk',
             'ontime': 'sunset',
             'ontime_offset': -30,
             'offtime': '23:30',
             'offtime_offset': 0,
             'id': [0x38, 0x63, 0xD7]},
-           {'name': 'Shed Lights',
+           {'name': 'Shed Lights - Dawn',
+            'ontime': '06:30',
+            'ontime_offset': 0,
+            'offtime': 'sunrise',
+            'offtime_offset': 30,
+            'id': [0x08, 0x2C, 0xD1]},
+           {'name': 'Shed Lights - Dusk',
             'ontime': 'sunset',
             'ontime_offset': -30,
             'offtime': '23:30',
@@ -114,7 +133,7 @@ def getSolarInfo():
 
 def scheduleAutomation():
     sun_events = getSolarInfo()
-    now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
+    now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
 
     # Delete all the old jobs first
     for i in xrange(len(jobs) - 1, -1 , -1):
@@ -159,9 +178,14 @@ def scheduleAutomation():
 
         # Check to see if the script has been run between ontime and off time and turn on the device immediately
         if ontime < now < offtime:
+            print("Turning On: " + device['name'])
             sendCommand(device['id'], 'On')
         else:
+            print("Turning Off: " + device['name'])
             sendCommand(device['id'], 'Off')
+
+        # Rest
+        time.sleep(0.5)
 
 def main():
     daily_refresh_job = sched.add_job(scheduleAutomation, trigger='cron', hour=0, minute=0 )
